@@ -522,11 +522,17 @@ void DeviceDriverSet_Servo::DeviceDriverSet_Servo_Init(void) {
 }
 
 void DeviceDriverSet_Servo::DeviceDriverSet_Servo_Sweep(void) {
-  // Move 1 degree every 5 milliseconds (speed up)
-  if (millis() - lastSweepTime > 5) {
-    lastSweepTime = millis();
+  unsigned long currentTime = millis();
+  unsigned long elapsed = currentTime - lastSweepTime;
 
-    currentAngle += sweepDirection;
+  // Move 1 degree every 5 milliseconds (speed up)
+  if (elapsed >= 5) {
+    int steps = elapsed / 5;
+    lastSweepTime =
+        currentTime - (elapsed % 5); // Keep the remainder for accuracy
+
+    currentAngle += (sweepDirection * steps);
+
     if (currentAngle >= 80) {
       currentAngle = 80;
       sweepDirection = -1;
