@@ -290,8 +290,9 @@ void DeviceDriverSet_Motor::DeviceDriverSet_Motor_control(
         break;
       case direction_back:
         digitalWrite(PIN_Motor_BIN, LOW);
-        analogWrite(PIN_Motor_PWMB, speed_B);
-
+        // If this is a Phase/Enable driver, when DIR is LOW,
+        // the PWM duty cycle is often inverted (255=stop, 0=fastest)
+        analogWrite(PIN_Motor_PWMB, 255 - speed_B);
         break;
       case direction_void:
         analogWrite(PIN_Motor_PWMB, 0);
@@ -509,9 +510,31 @@ void DeviceDriverSet_MPU6050::DeviceDriverSet_MPU6050_Test(void) {
                    (STM8S003F3_MPU6050_IIC_buff[2]));
     Serial.println(
         "...................................."); // print the character
-  } else {
-    /* code */
-    Serial.println("STM8S003F3_MPU6050 data error"); // print the character
   }
 }
 #endif
+
+/*Servo*/
+void DeviceDriverSet_Servo::DeviceDriverSet_Servo_Init(void) {
+  myServo.attach(PIN_Servo);
+  myServo.write(currentAngle);
+  lastSweepTime = millis();
+}
+
+void DeviceDriverSet_Servo::DeviceDriverSet_Servo_Sweep(void) {
+  // Move 1 degree every 5 milliseconds (speed up)
+  if (millis() - lastSweepTime > 5) {
+    lastSweepTime = millis();
+
+    currentAngle += sweepDirection;
+    if (currentAngle >= 80) {
+      currentAngle = 80;
+      sweepDirection = -1;
+    } else if (currentAngle <= 0) {
+      currentAngle = 0;
+      sweepDirection = 1;
+    }
+
+    myServo.write(currentAngle);
+  }
+}

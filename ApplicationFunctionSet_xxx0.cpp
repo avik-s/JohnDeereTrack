@@ -34,6 +34,7 @@ DeviceDriverSet_Motor AppMotor;
 DeviceDriverSet_ULTRASONIC AppULTRASONIC;
 DeviceDriverSet_STM8S003F3_IR AppSTM8S003F3_IR;
 DeviceDriverSet_MPU6050 AppMPU6050getdata;
+DeviceDriverSet_Servo AppServo;
 /*f(x) int */
 static boolean function_xxx(long x, long s, long e) // f(x)
 {
@@ -108,6 +109,7 @@ void ApplicationFunctionSet::ApplicationFunctionSet_Init(void) {
   AppMotor.DeviceDriverSet_Motor_Init();
   AppRBG_LED.DeviceDriverSet_RBGLED_Init(20);
   AppULTRASONIC.DeviceDriverSet_ULTRASONIC_Init();
+  AppServo.DeviceDriverSet_Servo_Init();
 }
 
 static bool ApplicationFunctionSet_OwlCarLeaveTheGround(void) {
@@ -1037,12 +1039,18 @@ void ApplicationFunctionSet::ApplicationFunctionSet_Obstacle(void) {
     if (function_xxx(UltrasoundData_cm, 1, ObstacleDetection)) {
       // Forward path is blocked, so we evade
       /* Turn left motor backward, right motor forward (Spin Left) */
-      ApplicationFunctionSet_OwlCarMotionControl(Left, 255);
+      // Direct command to motor driver to force a left turn
+      // Left motor: direction_back, speed 255
+      // Right motor: direction_just, speed 255
+      AppMotor.DeviceDriverSet_Motor_control(false /*direction_back*/, 255,
+                                             true /*direction_just*/, 255,
+                                             true /*control_enable*/);
 
-      // Wait for 4 seconds without tripping watchdog
+      // Wait for 1 second (1000ms) without tripping watchdog
       unsigned long startTime = millis();
-      while (millis() - startTime < 300) {
+      while (millis() - startTime < 1000) {
         wdt_reset(); // Need to pet the dog so it doesn't reboot
+        ApplicationFunctionSet_ServoUpdate(); // Keep the sweeping active!
       }
     } else {
       timestamp = true;
@@ -2232,4 +2240,8 @@ void ApplicationFunctionSet::ApplicationFunctionSet_SerialPortDataAnalysis(
     } else {
     }
   }
+}
+
+void ApplicationFunctionSet::ApplicationFunctionSet_ServoUpdate(void) {
+  AppServo.DeviceDriverSet_Servo_Sweep();
 }

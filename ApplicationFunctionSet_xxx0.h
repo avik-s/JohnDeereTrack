@@ -26,6 +26,7 @@ public:
   void ApplicationFunctionSet_KeyCommand(void);             // 按键命令
   void ApplicationFunctionSet_SensorDataUpdate(void);       // 传感器数据更新
   void ApplicationFunctionSet_SerialPortDataAnalysis(void); // 串口数据解析
+  void ApplicationFunctionSet_ServoUpdate(void);            // Servo Sweep
 
 public: /*CMD*/
   void CMD_UltrasoundModuleStatus_xxx0(uint8_t is_get);
